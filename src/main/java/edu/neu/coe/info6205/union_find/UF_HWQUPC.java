@@ -211,6 +211,7 @@ public class UF_HWQUPC implements UF {
     	/*
     	 * reduced the number of components from n to 1 using while loop
     	 * creating a single tree at the end
+    	 * best case
     	 */
     	
     	System.out.println("For creating a single tree at the end ");
@@ -259,6 +260,37 @@ public class UF_HWQUPC implements UF {
     		}
     		int count=uf.components();
     		System.out.println("Number of objects (n): "+n[i]+" ,Number of trees created at the end: "+count+" ,No. of the pairs generated (m): "+npairs);
+    	}
+    	System.out.println("");
+    	
+  
+    	/*
+    	 * reduced the number of components from n to 1 using while loop
+    	 * creating a single tree at the end
+    	 * not the best case
+    	 */
+    	
+  
+    	System.out.println("For creating a single tree at the end and not the best case");
+    	
+    	for(int i=0;i<n.length;i++)
+    	{
+    		int npairs=0;
+    		UF_HWQUPC uf=new UF_HWQUPC(n[i],true);
+    		Random random = new Random();
+    		while(uf.components()!=1)
+    		{
+    		int p=random.nextInt(n[i]);
+    		int q=random.nextInt(n[i]);
+    		npairs++;
+    		if(!uf.connected(p, q))
+        	{
+        		uf.union(p, q);
+        		
+        	}
+    		}
+    		int count=uf.components();
+    		System.out.println("Number of objects (n):  "+n[i]+" ,Number of trees created at the end: "+count+" ,No. of the pairs generated (m): "+npairs);
     	}
     	
     }
