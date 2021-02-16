@@ -8,6 +8,7 @@
 package edu.neu.coe.info6205.union_find;
 
 import java.util.Arrays;
+import java.util.Random;
 
 /**
  * Height-weighted Quick Union with Path Compression
@@ -81,7 +82,12 @@ public class UF_HWQUPC implements UF {
     public int find(int p) {
         validate(p);
         int root = p;
-        // TO BE IMPLEMENTED
+        
+        while(root!=getParent(root)) {
+        	
+        doPathCompression(root);
+        root=getParent(root);
+        }
         return root;
     }
 
@@ -168,7 +174,23 @@ public class UF_HWQUPC implements UF {
     private boolean pathCompression;
 
     private void mergeComponents(int i, int j) {
-        // TO BE IMPLEMENTED make shorter root point to taller one
+    	
+    	int hi= height[i];
+    	int hj=height[j];
+    	
+    	if(hi==hj)
+    	{
+    		updateParent(find(j),find(i));
+    		updateHeight(find(i),find(j));
+    	}
+    	else if(hi>hj)
+    	{
+    		updateParent(find(j),find(i));
+    	}
+    	else if(hj>hi)
+    	{
+    		updateParent(find(i),find(j));
+    	}
     }
 
     /**
@@ -176,5 +198,69 @@ public class UF_HWQUPC implements UF {
      */
     private void doPathCompression(int i) {
         // TO BE IMPLEMENTED update parent to value of grandparent
+    	if(pathCompression) {
+    	int gparent= getParent(getParent(i));
+    	updateParent(i,gparent);
+    	}
+    }
+    
+    public static void main(String[] args) {
+    	
+    	int n[]= {16000,32000,64000,12800,25600,51200,102400,204800,409600,819200};
+
+    	/*
+    	 * reduced the number of components from n to 1 using while loop
+    	 * creating a single tree at the end
+    	 */
+    	
+    	System.out.println("For creating a single tree at the end ");
+    	for(int i=0;i<n.length;i++)
+    	{
+    		int npairs=0;
+    		UF_HWQUPC uf=new UF_HWQUPC(n[i],true);
+    		Random random = new Random();
+    		while(uf.components()!=1)
+    		{
+    		int p=random.nextInt(n[i]);
+    		int q=random.nextInt(n[i]);
+    		
+    		if(!uf.connected(p, q))
+        	{
+        		uf.union(p, q);
+        		npairs++;
+        	}
+    		}
+    		int count=uf.components();
+    		System.out.println("Number of objects (n):  "+n[i]+" ,Number of trees created at the end: "+count+" ,No. of the pairs generated (m): "+npairs);
+    	}
+    	System.out.println("");
+    	
+    	/*number of objects (n) and the number of pairs (m) 
+    	 *  without reducing the number of components from n to 1 
+    	 *  not creating a single tree at the end
+    	 *  there can be multiple trees
+    	 */
+    	System.out.println("For creating a multiple tree at the end");
+    	for(int i=0;i<n.length;i++)
+    	{
+    		int npairs=0;
+    		UF_HWQUPC uf=new UF_HWQUPC(n[i],true);
+    		Random random = new Random();
+    		for(int j=0;j<n[i];j++)
+    		{
+    		int p=random.nextInt(n[i]);
+    		int q=random.nextInt(n[i]);
+    		
+    		if(!uf.connected(p, q))
+        	{
+        		uf.union(p, q);
+        		npairs++;
+        	}
+    		}
+    		int count=uf.components();
+    		System.out.println("Number of objects (n): "+n[i]+" ,Number of trees created at the end: "+count+" ,No. of the pairs generated (m): "+npairs);
+    	}
+    	
     }
 }
+
