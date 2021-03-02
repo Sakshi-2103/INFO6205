@@ -8,6 +8,9 @@
 package edu.neu.coe.info6205.union_find;
 
 import java.util.Arrays;
+import java.util.Random;
+
+import edu.neu.coe.info6205.util.Timer;
 
 /**
  * Height-weighted Quick Union with Path Compression
@@ -81,7 +84,12 @@ public class UF_HWQUPC implements UF {
     public int find(int p) {
         validate(p);
         int root = p;
-        // TO BE IMPLEMENTED
+        
+        while(root!=getParent(root)) {
+        	
+        doPathCompression(root);
+        root=getParent(root);
+        }
         return root;
     }
 
@@ -168,7 +176,19 @@ public class UF_HWQUPC implements UF {
     private boolean pathCompression;
 
     private void mergeComponents(int i, int j) {
-        // TO BE IMPLEMENTED make shorter root point to taller one
+    	
+    
+    	if(height[i]<height[j]) {
+    		parent[i]=j;
+    	}
+    	else if(height[i]>height[j])
+    	{
+    		parent[j]=i;
+    	}
+    	else {
+    		parent[j]=i;
+    		height[i]++;
+    	}
     }
 
     /**
@@ -176,5 +196,38 @@ public class UF_HWQUPC implements UF {
      */
     private void doPathCompression(int i) {
         // TO BE IMPLEMENTED update parent to value of grandparent
+    	
+    	
+    	if(pathCompression) {
+    	
+    	parent[i]=parent[parent[i]];
+    	i=parent[i];
+    	
+    	}
+    	
     }
+    public static void main(String[] args) {
+		// TODO Auto-generated method stub
+    	
+    	for(int i=500;i<=8192000;i=i*2) {
+    		UF_HWQUPC u=new UF_HWQUPC(i);
+    		Random r=new Random();
+    		Timer t=new Timer();
+    		while(u.components()!=1) {
+    			int a=r.nextInt(i);
+    			int b=r.nextInt(i);
+    			if(!u.connected(a, b)) {
+    				u.union(a, b);
+    			}
+    			
+    		}
+    		System.out.println("Nodes(n) "+i +", Time Taken(t) "+t.stop());
+    		
+    		
+    	}
+
+	}
+
 }
+
+

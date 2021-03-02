@@ -3,6 +3,10 @@
  */
 package edu.neu.coe.info6205.union_find;
 
+import java.util.Random;
+
+import edu.neu.coe.info6205.util.Timer;
+
 /**
  * Weighted Quick Union with Path Compression
  */
@@ -110,5 +114,26 @@ public class WQUPC {
         }
         count--;
     }
+    public static void main(String[] args) {
+		// TODO Auto-generated method stub
+    	
+    	for(int i=500;i<=8192000;i=i*2) {
+    		WQUPC w=new WQUPC(i);
+    		Random r=new Random();
+    		Timer t=new Timer();
+    		while(w.count()!=1) {
+    			int a=r.nextInt(i);
+    			int b=r.nextInt(i);
+    			if(!w.connected(a, b)) {
+    				w.union(a, b);
+    			}
+    			
+    		}
+    		
+    		System.out.println("Nodes(n)= "+i +", Time Taken(t)= "+t.stop());
+    		
+    	}
+
+	}
 
 }
