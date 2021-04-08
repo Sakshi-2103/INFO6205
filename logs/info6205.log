@@ -26,3 +26,13 @@
 2021-02-04 22:29:20 INFO  Benchmark_Timer - Begin run: running with 2 runs
 2021-02-04 22:29:20 INFO  Benchmark_Timer - Begin run: running with 2 runs
 2021-02-04 22:29:42 INFO  Benchmark_Timer - Begin run: running with 2 runs
+2021-04-08 19:38:18 DEBUG Config - Config.get(PriorityQueue, isFloydImplementation) = true
+2021-04-08 19:38:35 INFO  PriorityQueueBenchmark - Testing with 100 runs of sorting 4,000 words
+2021-04-08 19:38:35 DEBUG Config - Config.get(PriorityQueue, isFloydImplementation) = true
+2021-04-08 19:38:35 INFO  PriorityQueueBenchmark - Testing with 200 runs of sorting 8,000 words
+2021-04-08 19:38:37 INFO  PriorityQueueBenchmark - Testing with 300 runs of sorting 16,000 words
+2021-04-08 19:38:40 INFO  PriorityQueueBenchmark - Testing with 400 runs of sorting 32,000 words
+2021-04-08 19:38:50 INFO  PriorityQueueBenchmark - Testing with 100 runs of sorting 4,000 numbers
+2021-04-08 19:38:50 INFO  PriorityQueueBenchmark - Testing with 200 runs of sorting 8,000 numbers
+2021-04-08 19:38:52 INFO  PriorityQueueBenchmark - Testing with 300 runs of sorting 16,000 numbers
+2021-04-08 19:38:56 INFO  PriorityQueueBenchmark - Testing with 400 runs of sorting 32,000 numbers

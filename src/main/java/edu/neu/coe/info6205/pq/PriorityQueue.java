@@ -1,193 +1,323 @@
 package edu.neu.coe.info6205.pq;
 
+import java.io.IOException;
 import java.util.*;
+
+import edu.neu.coe.info6205.sort.simple.InsertionSort;
+import edu.neu.coe.info6205.util.Config;
+
 
 /**
  * Priority Queue Data Structure which uses a binary heap.
  * <p>
- * It is unlimited in capacity, although there is no code to grow it after it has been constructed.
- * It can serve as a minPQ or a maxPQ (define "max" as either false or true, respectively).
+ * It is unlimited in capacity, although there is no code to grow it after it
+ * has been constructed. It can serve as a minPQ or a maxPQ (define "max" as
+ * either false or true, respectively).
  * <p>
- * It follows the code from Sedgewick and Wayne more or less. I have changed the names a bit. For example,
- * the methods to insert and remove the max (or min) element are called "give" and "take," respectively.
+ * It follows the code from Sedgewick and Wayne more or less. I have changed the
+ * names a bit. For example, the methods to insert and remove the max (or min)
+ * element are called "give" and "take," respectively.
  * <p>
- * It operates on arbitrary Object types which implies that it requires a Comparator to be passed in.
+ * It operates on arbitrary Object types which implies that it requires a
+ * Comparator to be passed in.
  * <p>
  * For all details on usage, please see PriorityQueueTest.java
  *
  * @param <K>
  */
 public class PriorityQueue<K> implements Iterable<K> {
+	
 
-    /**
-     * Basic constructor that takes the max value, an actually array of elements, and a comparator.
-     *
-     * @param max        whether or not this is a Maximum Priority Queue as opposed to a Minimum PQ.
-     * @param binHeap    a pre-formed array with length one greater than the required capacity.
-     * @param last       the number of elements in binHeap
-     * @param comparator a comparator for the type K
-     */
-    public PriorityQueue(boolean max, Object[] binHeap, int last, Comparator<K> comparator) {
+	private final boolean max;
+	private final Comparator<K> comparator;
+	private final K[] binHeap; // binHeap[i] is ith element of binary heap (first element is reserved)
+	private int last; // number of elements in the binary heap
+	private boolean floyd;
+	private int compareCount = 0, swapCount = 0;
 
-        this.max = max;
-        this.comparator = comparator;
-        this.last = last;
-        //noinspection unchecked
-        this.binHeap = (K[]) binHeap;
-    }
+	/**
+	 * Basic constructor that takes the max value, an actually array of elements,
+	 * and a comparator.
+	 *
+	 * @param max        whether or not this is a Maximum Priority Queue as opposed
+	 *                   to a Minimum PQ.
+	 * @param binHeap    a pre-formed array with length one greater than the
+	 *                   required capacity.
+	 * @param last       the number of elements in binHeap
+	 * @param comparator a comparator for the type K
+	 * @param floyd      pass true for floyd's trick and false for regular Priority
+	 *                   Queue implementation. default is false
+	 * @throws IOException
+	 */
+	public PriorityQueue(boolean max, Object[] binHeap, int last, Comparator<K> comparator, Config config) {
 
-    /**
-     * Constructor which takes only the priority queue's maximum capacity and a comparator
-     *
-     * @param n          the desired maximum capacity.
-     * @param max        whether or not this is a Maximum Priority Queue as opposed to a Minimum PQ.
-     * @param comparator a comparator for the type K
-     */
-    public PriorityQueue(int n, boolean max, Comparator<K> comparator) {
+		this.max = max;
+		this.comparator = comparator;
+		this.last = last; // noinspection unchecked
+		this.binHeap = (K[]) binHeap;
+		this.floyd = config.getBoolean("PriorityQueue", "isFloydImplementation");
+	}
 
-        // NOTE that we reserve the first element of the binary heap, so the length must be n+1, not n
-        this(max, new Object[n + 1], 0, comparator);
-    }
 
-    /**
-     * Constructor which takes only the priority queue's maximum capacity and a comparator
-     *
-     * @param n          the desired maximum capacity.
-     * @param comparator a comparator for the type K
-     */
-    public PriorityQueue(int n, Comparator<K> comparator) {
+	/**
+	 * Constructor which takes only the priority queue's maximum capacity and a
+	 * comparator
+	 *
+	 * @param n          the desired maximum capacity.
+	 * @param max        whether or not this is a Maximum Priority Queue as opposed
+	 *                   to a Minimum PQ.
+	 * @param comparator a comparator for the type K
+	 * @throws IOException 
+	 */
+	public PriorityQueue(int n, boolean max, Comparator<K> comparator,Config config){
 
-        this(n, true, comparator);
-    }
+		// NOTE that we reserve the first element of the binary heap, so the length must
+		// be n+1, not n
+		this(max, new Object[n + 1], 0, comparator,config);
+	}
 
-    /**
-     * @return true if the current size is zero.
-     */
-    public boolean isEmpty() {
-        return last == 0;
-    }
+	/**
+	 * Constructor which takes only the priority queue's maximum capacity and a
+	 * comparator
+	 *
+	 * @param n          the desired maximum capacity.
+	 * @param comparator a comparator for the type K
+	 * @throws IOException
+	 */
+	public PriorityQueue(int n, Comparator<K> comparator, Config config) {
 
-    /**
-     * @return the number of elements actually stored in this Priority Queue
-     */
-    public int size() {
-        return last;
-    }
+		this(n, true, comparator, config);
+	}
 
-    /**
-     * Insert an element with the given key into this Priority Queue.
-     *
-     * @param key the value of the key to give
-     */
-    public void give(K key) {
-        if (last == binHeap.length - 1)
-            last--; // if we are already at capacity, then we arbitrarily trash the least eligible element
-        // (even if it's more eligible than key).
-        binHeap[++last] = key; // insert the key into the binary heap just after the last element
-        swimUp(last); // reorder the binary heap
-    }
+	/**
+	 * @return true if the current size is zero.
+	 */
+	public boolean isEmpty() {
+		return last == 0;
+	}
 
-    /**
-     * Remove the root element from this Priority Queue and adjust the binary heap accordingly.
-     * If max is true, then the result will be the maximum element, else the minimum element.
-     * NOTE that this method is called DelMax (or DelMin) in the book.
-     *
-     * @return If max is true, then the maximum element, otherwise the minimum element.
-     * @throws PQException if this priority queue is empty
-     */
-    public K take() throws PQException {
-        if (isEmpty()) throw new PQException("Priority queue is empty");
-        K result = binHeap[1]; // get the root element (the largest or smallest, according to field max)
-        swap(1, last--); // swap the root element with the last element
-        sink(1); // adjust the heap so that it is ordered again
-        binHeap[last + 1] = null; // prevent loitering
-        return result;
-    }
+	/**
+	 * @return the number of elements actually stored in this Priority Queue
+	 */
+	public int size() {
+		return last;
+	}
 
-    /**
-     * Sink the element at index k down
-     */
-    private void sink(@SuppressWarnings("SameParameterValue") int k) {
-        int i = k;
-        while (firstChild(i) <= last) {
-            int j = firstChild(i);
-            if (j < last && unordered(j, j + 1)) j++;
-            if (!unordered(i, j)) break;
-            swap(i, j);
-            i = j;
-        }
-    }
+	/**
+	 * Insert an element with the given key into this Priority Queue.
+	 *
+	 * @param key the value of the key to give
+	 */
+	public void give(K key) {
+		if (last == binHeap.length - 1)
+			last--; // if we are already at capacity, then we arbitrarily trash the least eligible
+					// element
+		// (even if it's more eligible than key).
+		binHeap[++last] = key; // insert the key into the binary heap just after the last element
+		swimUp(last); // reorder the binary heap
+	}
 
-    /**
-     * Swim the element at index k up
-     */
-    private void swimUp(int k) {
-        int i = k;
-        while (i > 1 && unordered(parent(i), i)) {
-            swap(i, parent(i));
-            i = parent(i);
-        }
-    }
+	/**
+	 * Remove the root element from this Priority Queue and adjust the binary heap
+	 * accordingly. If max is true, then the result will be the maximum element,
+	 * else the minimum element. NOTE that this method is called DelMax (or DelMin)
+	 * in the book.
+	 *
+	 * @return If max is true, then the maximum element, otherwise the minimum
+	 *         element.
+	 * @throws PQException if this priority queue is empty
+	 */
 
-    /**
-     * Exchange the values at indices i and j
-     */
-    private void swap(int i, int j) {
-        K tmp = binHeap[i];
-        binHeap[i] = binHeap[j];
-        binHeap[j] = tmp;
-    }
+	public K take() throws PQException {
+		
+		if (isEmpty())
+			throw new PQException("Priority queue is empty");
+		K result = binHeap[1]; // get the root element (the largest or smallest, according to field max)
+		swap(1, last--);
 
-    /**
-     * Compare the elements at indices i and j.
-     * We expect the first index (the smaller one) to be greater than the second, assuming that max is true.
-     * In this case, we return false.
-     *
-     * @param i the lower index, numerically
-     * @param j the higher index, numerically
-     * @return true if the values are out of order.
-     */
-    private boolean unordered(int i, int j) {
-        return (comparator.compare(binHeap[i], binHeap[j]) > 0) ^ max;
-    }
+		if (floyd) {
+			int node = snake(1);
+			swimUp(node);
+		}
 
-    /**
-     * Get the index of the parent of the element at index k
-     */
-    private int parent(int k) {
-        return k / 2;
-    }
+		else {
+			sink(1);
+		}
 
-    /**
-     * Get the index of the first child of the element at index k.
-     * The index of the second child will be one greater than the result.
-     */
-    private int firstChild(int k) {
-        return k * 2;
-    }
+		binHeap[last + 1] = null; // prevent loitering
+		return result;
+	}
 
-    /**
-     * The following methods are for unit testing ONLY!!
-     */
+	/**
+	 * Sink the element at index k down
+	 */
+	private void sink(@SuppressWarnings("SameParameterValue") int k) {
+		
+		int i = k;
+		while (firstChild(i) <= last) {
+			
+			int j = firstChild(i);
+			if (j < last && unordered(j, j + 1))
+				j++;
+			if (!unordered(i, j))
+			{
+				compareCount = compareCount + 1;
+				break;
+			}
+			swap(i, j);
+			i = j;
+			
+		}
+	}
 
-    @SuppressWarnings("unused")
-    private K peek(int k) {
-        return binHeap[k];
-    }
+	/**
+	 * Swim the element at index k up
+	 */
+	private void swimUp(int k) {
+		int i = k;
+		while (i > 1 && unordered(parent(i), i)) {
+			swap(i, parent(i));
+			i = parent(i);
+		}
+	}
 
-    @SuppressWarnings("unused")
-    private boolean getMax() {
-        return max;
-    }
+	/**
+	 * Exchange the values at indices i and j
+	 */
+	private void swap(int i, int j) {
+		K tmp = binHeap[i];
+		binHeap[i] = binHeap[j];
+		binHeap[j] = tmp;
+		swapCount = swapCount + 1;
+	}
 
-    private final boolean max;
-    private final Comparator<K> comparator;
-    private final K[] binHeap; // binHeap[i] is ith element of binary heap (first element is reserved)
-    private int last; // number of elements in the binary heap
+	private int snake(@SuppressWarnings("SameParameterValue") int k) {
+		int i = k;
+	
+			while (firstChild(i) <= last || firstChild(i)+1 <= last) {
+				int a= firstChild(i);
+				int b=firstChild(i)+1;
+				
+				if(!unordered(a,b)) {
+					
+					swap(a,i);
+					i=a;
+				}
+				else
+				{
+					swap(b,i);
+					i=b;
+				}	
+			}
+		
+		return i;
+	}
 
-    @Override
-    public Iterator<K> iterator() {
-        Collection<K> result = new ArrayList<>(Arrays.asList(binHeap));
-        return result.iterator();
-    }
+	/**
+	 * Compare the elements at indices i and j. We expect the first index (the
+	 * smaller one) to be greater than the second, assuming that max is true. In
+	 * this case, we return false.
+	 *
+	 * @param i the lower index, numerically
+	 * @param j the higher index, numerically
+	 * @return true if the values are out of order.
+	 */
+	private boolean unordered(int i, int j) {
+		compareCount = compareCount + 1;
+		return (comparator.compare(binHeap[i], binHeap[j]) > 0) ^ max;
+	}
+
+	/**
+	 * Get the index of the parent of the element at index k
+	 */
+	private int parent(int k) {
+		return k / 2;
+	}
+
+	/**
+	 * Get the index of the first child of the element at index k. The index of the
+	 * second child will be one greater than the result.
+	 */
+	private int firstChild(int k) {
+		return k * 2;
+	}
+
+	/**
+	 * The following methods are for unit testing ONLY!!
+	 */
+
+	@SuppressWarnings("unused")
+	private K peek(int k) {
+		return binHeap[k];
+	}
+
+	@SuppressWarnings("unused")
+	private boolean getMax() {
+		return max;
+	}
+	
+	public int getCompareCount() {
+		return compareCount;
+	}
+
+	public void setCompareCount(int compareCount) {
+		this.compareCount = compareCount;
+	}
+
+	public int getSwapCount() {
+		return swapCount;
+	}
+
+	public void setSwapCount(int swapCount) {
+		this.swapCount = swapCount;
+	}
+
+
+	@Override
+	public Iterator<K> iterator() {
+		Collection<K> result = new ArrayList<>(Arrays.asList(binHeap));
+		return result.iterator();
+	}
+	
+	public static <X> PriorityQueue<X> getPriorityQueue(X[] data, Comparator<X> comp, Config config) {
+		PriorityQueue<X> pq = new PriorityQueue<X>(data.length, comp,config);
+		
+		for(X temp: data) {
+			pq.give(temp);
+		}
+		
+		return pq;
+	}
+	
+	public int consume(K[] data){
+		//System.out.println(Arrays.toString(data));
+		for(K temp: data) {
+			give(temp);
+		}
+		//System.out.println(Arrays.toString(binHeap));
+		resetCounter();
+		emptyPriorityqueue();
+		int compare = this.compareCount;
+		resetCounter();
+		return compare;
+	}
+	
+	private void emptyPriorityqueue() {
+		while(!isEmpty()) {
+			try {
+				take();
+			} catch (PQException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	public void resetCounter() {
+		compareCount=0;
+		swapCount=0;
+	}
 }
+
+
+
+
